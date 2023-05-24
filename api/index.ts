@@ -4,7 +4,8 @@ module.exports = async (req, res) => {
   if (!req.query.url) return res.status(400).send("No url query specified.");
   if (!checkUrl(req.query.url)) return res.status(400).send("Invalid url query specified.");
   try {
-    const file = await getScreenshot(req.query.url, req.query.width, req.query.height);
+    const file = await getScreenshot(req.query.url, {path: req.query.url, orientation: /(?<=[/])(landscape|portrait)$/.exec(req.query.url)[0],
+				format: "A4"});
     res.setHeader("Content-Type", "image/png");
     res.setHeader("Cache-Control", "public, immutable, no-transform, s-maxage=86400, max-age=86400");
     res.status(200).end(file);

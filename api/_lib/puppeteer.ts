@@ -50,7 +50,7 @@ export async function getScreenshot(url, params: CapturePdfParms) {
         });
     }
     await page.goto(url, {
-        waitUntil: "networkidle0",
+        waitUntil: "networkidle2",
     });
     await page.emulateMediaType("print");
     let pdf: Buffer;

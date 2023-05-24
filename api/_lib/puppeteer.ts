@@ -2,6 +2,7 @@ import { launch, Browser, Page, PaperFormat } from "puppeteer-core";
 import chrome from "chrome-aws-lambda";
 
 let browser: Browser | undefined;
+let _page: Page | undefined;
 
 const puppeteerLaunch = async () => {
   const options = { 
@@ -16,6 +17,13 @@ const puppeteerLaunch = async () => {
   });
 };
 
+async function getPage(){
+  if(!browser) await puppeteerLaunch();
+  if(_page) return _page;
+  _page = await browser.newPage();
+  return _page;
+}
+
 export interface CapturePdfParms {
 	path: string;
 	orientation?: "landscape" | "portrait";
@@ -28,8 +36,8 @@ export interface CapturePdfParms {
 }
 
 export async function getScreenshot(url, params: CapturePdfParms) {
-    if(!browser) await puppeteerLaunch();
-    const page = await browser.newPage();
+    
+    const page = await getPage();
     if (params.viewport) {
         await page.setViewport({
             width: params.viewport.width,
@@ -70,8 +78,6 @@ export async function getScreenshot(url, params: CapturePdfParms) {
             format: params.format ?? "a4",
         });
     }
-
-    await page.close();
 
     return pdf;
 }

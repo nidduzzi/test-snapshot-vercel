@@ -1,6 +1,17 @@
-import { launch, Page } from "puppeteer-core";
+import { launch, Page, PaperFormat } from "puppeteer-core";
 import chrome from "chrome-aws-lambda";
 let _page: Page | null;
+
+export interface CapturePdfParms {
+	path: string;
+	orientation?: "landscape" | "portrait";
+	format?: PaperFormat;
+	isFullHeight?: boolean;
+	viewport?: {
+		height: number;
+		width: number;
+	};
+}
 
 async function getPage() {
     if (_page) return _page;
@@ -14,10 +25,66 @@ async function getPage() {
     return _page;
 }
 
-export async function getScreenshot(url, width, height) {
+export async function getScreenshot(url, params: CapturePdfParms) {
     const page = await getPage();
-    await page.goto(url);
-    await page.setViewport({ width: Number(width) || 1280, height: Number(height) || 720, deviceScaleFactor: 2 });
-    const file = await page.screenshot();
-    return file;
+    if (params.viewport) {
+        await page.setViewport({
+            width: params.viewport.width,
+            height: params.viewport.height,
+        });
+    }
+    await page.goto(url, {
+        waitUntil: "networkidle0",
+    });
+    await page.emulateMediaType("print");
+    const var pdf: Buffer;
+    if (params.isFullHeight) {
+        const pageHeight = await evaluateHeight(page);
+
+        pdf = await page.pdf({
+            margin: {
+                top: "0px",
+                right: "0px",
+                bottom: "0px",
+                left: "0px",
+            },
+            height: pageHeight + 2 + "px",
+            width: params.viewport?.width
+                ? params.viewport.width + "px"
+                : undefined,
+            printBackground: true,
+        });
+    } else {
+        pdf = await page.pdf({
+            landscape: params.orientation === "landscape",
+            margin: {
+                top: "0px",
+                right: "0px",
+                bottom: "0px",
+                left: "0px",
+            },
+            printBackground: true,
+            format: params.format ?? "A4",
+        });
+    }
+
+    await page.close();
+
+    return pdf;
+}
+
+async evaluateHeight(page: Page) {
+    return await page.evaluate(() => {
+        var body = document.body,
+            html = document.documentElement;
+
+        var height = Math.max(
+            body.scrollHeight,
+            body.offsetHeight,
+            html.clientHeight,
+            html.scrollHeight,
+            html.offsetHeight
+        );
+        return height;
+    });
 }

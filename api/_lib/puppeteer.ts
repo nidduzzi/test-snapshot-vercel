@@ -1,25 +1,30 @@
 import { launch, Browser, Page, PaperFormat } from "puppeteer-core";
 import chrome from "chrome-aws-lambda";
 
-let browser: Browser | undefined;
+// let browser: Browser | undefined;
 let _page: Page | undefined;
 
-const puppeteerLaunch = async () => {
+// const puppeteerLaunch = async () => {
+//   const options = { 
+//       args: chrome.args,
+//       executablePath: await chrome.executablePath,
+//       headless: chrome.headless
+//   };
+//   browser = await launch(options);
+//   browser.on('disconnected', () => {
+//     if (browser.process() != null) browser.process().kill('SIGINT');
+//     puppeteerLaunch();
+//   });
+// };
+
+async function getPage(){
+  if (_page) return _page;
   const options = { 
       args: chrome.args,
       executablePath: await chrome.executablePath,
       headless: chrome.headless
   };
-  browser = await launch(options);
-  browser.on('disconnected', () => {
-    if (browser.process() != null) browser.process().kill('SIGINT');
-    puppeteerLaunch();
-  });
-};
-
-async function getPage(){
-  if(!browser) await puppeteerLaunch();
-  if(_page) return _page;
+  const browser = await launch(options);
   _page = await browser.newPage();
   return _page;
 }

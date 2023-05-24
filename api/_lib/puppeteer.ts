@@ -37,7 +37,7 @@ export async function getScreenshot(url, params: CapturePdfParms) {
         waitUntil: "networkidle0",
     });
     await page.emulateMediaType("print");
-    const var pdf: Buffer;
+    let pdf: Buffer;
     if (params.isFullHeight) {
         const pageHeight = await evaluateHeight(page);
 
@@ -73,12 +73,12 @@ export async function getScreenshot(url, params: CapturePdfParms) {
     return pdf;
 }
 
-async evaluateHeight(page: Page) {
+async function evaluateHeight(page: Page) {
     return await page.evaluate(() => {
-        var body = document.body,
+        let body = document.body,
             html = document.documentElement;
 
-        var height = Math.max(
+        let height = Math.max(
             body.scrollHeight,
             body.offsetHeight,
             html.clientHeight,

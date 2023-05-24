@@ -4,8 +4,8 @@ module.exports = async (req, res) => {
   if (!req.query.url) return res.status(400).send("No url query specified.");
   if (!checkUrl(req.query.url)) return res.status(400).send("Invalid url query specified.");
   try {
-    const file = await getScreenshot(req.query.url, {path: req.query.url, orientation: /(?<=[/])(landscape|portrait)$/.exec(req.query.url)[0],
-				format: "A4"});
+    const file = await getScreenshot(req.query.url, {path: req.query.url, orientation: /(?<=[/])(landscape|portrait)$/.exec(req.query.url)[0] as "landscape" | "portrait",
+				format: "a4"});
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Cache-Control", "public, immutable, no-transform, s-maxage=86400, max-age=86400");
     res.status(200).end(file);
@@ -15,8 +15,8 @@ module.exports = async (req, res) => {
   }
 }
 
-function checkUrl(string, hostname) {
-  var url = "";
+function checkUrl(string) {
+  var url: URL | undefined;
   try {
     url = new URL(string);
   } catch (error) {

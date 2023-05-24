@@ -1,6 +1,21 @@
-import { launch, Page, PaperFormat } from "puppeteer-core";
+import { launch, Browser, Page, PaperFormat } from "puppeteer-core";
 import chrome from "chrome-aws-lambda";
-let _page: Page | null;
+
+const options = { 
+        args: chrome.args,
+        executablePath: await chrome.executablePath,
+        headless: chrome.headless
+    };
+
+let browser: Browser | undefined;
+
+const puppeteerLaunch = async () => {
+  browser = await launch(options);
+  browser.on('disconnected', () => {
+    if (browser.process() != null) browser.process().kill('SIGINT');
+    puppeteerLaunch();
+  });
+};
 
 export interface CapturePdfParms {
 	path: string;
@@ -13,20 +28,9 @@ export interface CapturePdfParms {
 	};
 }
 
-async function getPage() {
-    if (_page) return _page;
-    const options = { 
-        args: chrome.args,
-        executablePath: await chrome.executablePath,
-        headless: chrome.headless
-    };
-    const browser = await launch(options);
-    _page = await browser.newPage();
-    return _page;
-}
-
 export async function getScreenshot(url, params: CapturePdfParms) {
-    const page = await getPage();
+    if(!browser) await pupeteerLaunch();
+    const page = await browser.newPage();
     if (params.viewport) {
         await page.setViewport({
             width: params.viewport.width,
